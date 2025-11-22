@@ -1,0 +1,34 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "9000:8000"
+    volumes:
+      - ./servers.yaml:/app/servers.yaml
+    secrets:
+      - db_password_prod
+      - db_password_test
+      - baseline
+    environment:
+      # We don't need specific env vars for secrets anymore as we read by name from /run/secrets/
+      - PYTHONUNBUFFERED=1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:9000
+      - NEXT_PUBLIC_REFRESH_INTERVAL=30000
+    depends_on:
+      - backend
+
+secrets:
+  db_password_prod:
+    file: ./secrets/db_password_prod.txt
+  db_password_test:
+    file: ./secrets/db_password_test.txt
+  baseline:
+    file: ./secrets/baseline.txt

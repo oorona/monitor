@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pyyaml
+oracledb
+psycopg2-binary
+mysql-connector-python
+requests
+ping3

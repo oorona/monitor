@@ -1,0 +1,12 @@
+secrets/
+servers.yaml
+__pycache__/
+*.pyc
+node_modules/
+.next/
+.env
+.venv
+venv
+.DS_Store
+.idea
+.vscode

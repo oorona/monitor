@@ -1,0 +1,43 @@
+servers:
+  database:
+    production:
+      server1:
+        databasename1:
+          type: ora
+          port: 1531
+          username: system
+          password: syspasswd
+        databasename2:
+          type: ora
+          port: 1531
+          username: system
+          password: syspasswd
+    test:
+      server1:
+        databasename1:
+          type: ora
+          port: 1531
+          username: system
+          password: syspasswd
+      pgserver1:
+        pgdb1:
+          type: pg
+          # Default port 5432 used
+          username: postgres
+          password: pgpasswd
+      mysqlserver1:
+        mysqldb1:
+          type: mysql
+          # Default port 3306 used
+          username: root
+          password: mysqlpasswd
+  application:
+    production:
+      appserver1:
+        urls:
+          - https://website.com
+          - https://website1.com
+    test:
+      appserver2:
+        urls:
+          - https://website2.com
