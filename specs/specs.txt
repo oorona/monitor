@@ -1,0 +1,179 @@
+SERVER MONITOR - TECHNICAL SPECIFICATIONS
+==========================================
+
+Version: 1.0.0
+Last Updated: January 2026
+
+OVERVIEW
+--------
+Server Monitor is a real-time infrastructure monitoring solution designed to
+provide unified visibility into database and application server health across
+multiple environments (production, test, development).
+
+CORE CAPABILITIES
+-----------------
+
+1. DATABASE SERVER MONITORING
+   - Oracle Database connectivity verification (oracledb driver)
+   - PostgreSQL connectivity verification (psycopg2 driver)
+   - MySQL connectivity verification (mysql-connector-python)
+   - Support for custom port configurations
+   - Default port fallback (Oracle: 1521, PostgreSQL: 5432, MySQL: 3306)
+   - Connection timeout handling (5 seconds)
+   - Credential management via Docker secrets or environment variables
+
+2. APPLICATION SERVER MONITORING
+   - HTTP/HTTPS endpoint health checks
+   - HTTP status code validation (200 OK verification)
+   - Redirect following support
+   - Connection timeout handling (10 seconds)
+   - Multiple URL monitoring per application server
+
+3. NETWORK CONNECTIVITY
+   - ICMP ping verification for all monitored hosts
+   - Ping timeout handling (2 seconds)
+   - Network reachability validation before service checks
+
+4. STATUS CACHING AND POLLING
+   - In-memory status caching for fast API responses
+   - Background polling at configurable intervals (default: 60 seconds)
+   - Asynchronous polling to prevent blocking
+   - Thread-based execution for synchronous operations
+
+BACKEND SPECIFICATIONS
+----------------------
+
+Framework: FastAPI
+Runtime: Python 3.11
+Server: Uvicorn ASGI
+
+API Endpoints:
+  GET /status  - Returns current status of all monitored servers
+  GET /health  - Backend health check endpoint
+
+Dependencies:
+  - fastapi: Web framework
+  - uvicorn: ASGI server
+  - pyyaml: YAML configuration parsing
+  - oracledb: Oracle database driver
+  - psycopg2-binary: PostgreSQL database driver
+  - mysql-connector-python: MySQL database driver
+  - requests: HTTP client for URL checks
+  - ping3: ICMP ping implementation
+
+CORS Configuration:
+  - All origins allowed (configurable for production)
+  - All methods and headers permitted
+  - Credentials supported
+
+FRONTEND SPECIFICATIONS
+-----------------------
+
+Framework: Next.js 16
+Runtime: Node.js 20
+UI Library: React 19
+Styling: Tailwind CSS 4
+
+Features:
+  - Real-time status dashboard
+  - Auto-refresh toggle (default: 30 seconds)
+  - Environment-grouped server display
+  - Visual status indicators (ping, database, URL)
+  - Error message display with tooltips
+  - Responsive grid layout
+  - Dark theme UI
+
+Build Output: Standalone (optimized for containerization)
+
+CONFIGURATION FORMAT
+--------------------
+
+Configuration File: servers.yaml
+
+Structure:
+  servers:
+    database:
+      <environment>:
+        <hostname>:
+          <database_name>:
+            type: ora|pg|mysql
+            port: <port_number> (optional)
+            username: <db_username>
+            password: <secret_name>
+    application:
+      <environment>:
+        <server_name>:
+          urls:
+            - <url1>
+            - <url2>
+
+Supported Database Types:
+  - ora: Oracle Database
+  - pg: PostgreSQL
+  - mysql: MySQL/MariaDB
+
+SECRETS MANAGEMENT
+------------------
+
+Primary: Docker secrets mounted at /run/secrets/<secret_name>
+Fallback: Environment variables (uppercase secret name)
+
+CONTAINERIZATION
+----------------
+
+Backend Container:
+  - Base: python:3.11-slim-bullseye
+  - Oracle Instant Client 21.12 included
+  - Exposed port: 8000
+
+Frontend Container:
+  - Base: node:20-alpine
+  - Multi-stage build (builder + runner)
+  - Exposed port: 3000
+
+Docker Compose:
+  - Backend exposed on host port 9000
+  - Frontend exposed on host port 4000
+  - Docker secrets support
+  - Volume mount for servers.yaml
+
+ENVIRONMENT VARIABLES
+---------------------
+
+Backend:
+  - PYTHONUNBUFFERED=1
+
+Frontend:
+  - NEXT_PUBLIC_API_URL: Backend API URL (default: http://localhost:9000)
+  - NEXT_PUBLIC_REFRESH_INTERVAL: Auto-refresh interval in ms (default: 30000)
+  - NODE_ENV: Environment mode (production for container)
+
+SYSTEM REQUIREMENTS
+-------------------
+
+Development:
+  - Python 3.11+
+  - Node.js 20+
+  - npm or yarn
+
+Production:
+  - Docker Engine 20.10+
+  - Docker Compose v2+
+  - Network access to monitored servers
+  - ICMP ping capability (may require elevated privileges)
+
+SECURITY CONSIDERATIONS
+-----------------------
+
+- Secrets never exposed in configuration files
+- CORS should be restricted in production
+- Database credentials managed via Docker secrets
+- No authentication on monitoring endpoints (add reverse proxy for production)
+
+LIMITATIONS
+-----------
+
+- Ping requires appropriate network permissions
+- Oracle Instant Client required for Oracle connections
+- Single polling interval for all servers
+- In-memory cache (no persistence across restarts)
