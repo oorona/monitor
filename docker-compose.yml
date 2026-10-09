@@ -1,7 +1,8 @@
 name: monitor
 services:
   backend:
-    image: dba-monitor-backend:local
+    container_name: monitor-backend
+    image: monitor-backend:local
     build: ./backend
     user: 1000:1000
     cap_drop:
@@ -45,7 +46,8 @@ services:
         aliases:
         - monitor-backend
   frontend:
-    image: dba-monitor-frontend:local
+    container_name: monitor-frontend
+    image: monitor-frontend:local
     build: ./frontend
     environment:
       MONITOR_API_URL: http://backend:8000
@@ -68,7 +70,8 @@ services:
         aliases:
         - monitor-frontend
   gateway:
-    image: dba-monitor-gateway:local
+    container_name: monitor-gateway
+    image: monitor-gateway:local
     build: ./gateway
     user: 1000:1000
     read_only: true
@@ -101,7 +104,7 @@ services:
       timeout: 5s
       retries: 3
   mcp-init:
-    image: dba-monitor-backend:local
+    image: monitor-backend:local
     profiles:
     - bootstrap
     user: 0:0
