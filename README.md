@@ -1,3 +1,5 @@
+> Oracle setup uses one shared wallet for all four apps. Follow the [fresh Watchword installation procedure](https://github.com/oorona/watchword/blob/main/docs/INSTALLATION.md) and [current wallet contract](docs/SHARED_ORACLE_WALLET.md). Per-project wallet setup is disabled.
+
 # Monitor
 
 Monitor uses the shared DBA Tools theme and runs in Docker alongside Watchword,

@@ -1,17 +1,12 @@
 # Configuration
 
 Oracle targets come exclusively from the suite's shared databases.json. Enable
-Monitor access in the shared Database Registry and enter an existing SEPS wallet
+Monitor access in the shared Database Registry and enter an existing shared wallet credential
 alias. The registry supplies the canonical name, stable database UUID, environment
 and host. Display-name changes do not rename a wallet credential. Monitor uses
-Thick-mode external authentication without an application username or password.
-SYS and SYSTEM wallets are rejected.
+Thick-mode connections in an isolated worker. The worker reads the selected named password entry from the one shared Oracle wallet and uses transient credentials. SYS/SYSTEM and administrative entries are rejected for Monitor workloads.
 
-Mount the registry at /registry and the consumer wallet directory at /wallets, both
-read-only. Each /wallets/<alias> must contain cwallet.sso, ewallet.p12, tnsnames.ora
-and sqlnet.ora. Generation symlinks within the mount are supported. The default
-consumer directory is WALLET_HOST_PATH/monitor. Set MONITOR_WALLET_HOST_PATH to
-another ordinary consumer's directory to share its wallet and exact alias.
+Mount the registry at `/registry` and the exact same `WALLET_HOST_PATH` root used by all four apps at `/wallets`, both read-only. `/wallets/current` selects a complete shared wallet snapshot with `cwallet.sso`, `ewallet.p12`, `entries.json`, `tnsnames.ora` and `sqlnet.ora`. Every credential alias is an entry in that wallet; it is not a separate directory. There is no Monitor wallet namespace or separate host path override.
 
 servers.yaml contains PostgreSQL, MySQL and application URL checks:
 
@@ -32,12 +27,12 @@ servers:
 
 Non-Oracle passwords reference private NAME or NAME.txt files. Legacy environment
 fallback uses the uppercased name. PostgreSQL/MySQL default ports are 5432/3306.
-Legacy Oracle YAML definitions are rejected until prepared using [migration](MIGRATION.md).
+Oracle targets must be registered in the shared database registry; Oracle passwords are not accepted in YAML.
 
 | Variable | Purpose |
 |----------|---------|
 | SUITE_REGISTRY_ROOT | Shared registry directory; suite uses /registry |
-| ORACLE_WALLET_ROOT | Consumer wallet directory; default /wallets |
+| ORACLE_WALLET_ROOT | The one shared wallet root; default /wallets |
 | ORACLE_CLIENT_LIB_DIR | Client libraries; Docker uses /opt/oracle/client/lib |
 | MONITOR_CONFIG_PATH | YAML path; suite uses /config/state/servers.yaml |
 | MONITOR_SECRETS_PATH | Non-Oracle secrets; suite uses /config/state/secrets |

@@ -1,4 +1,4 @@
-"""Read canonical Oracle targets; run each SEPS login in an isolated Client process."""
+"""Read canonical Oracle targets; run each shared wallet login in an isolated Client process."""
 import json
 import os
 from pathlib import Path
@@ -6,9 +6,10 @@ import re
 import subprocess
 import sys
 from suite_registry import Document
+from shared_wallet import BUNDLE_FILES, SharedWalletError, entries, resolve_wallet
 
 ALIAS = re.compile(r'[a-z][a-z0-9_-]{0,63}\Z')
-BUNDLE_FILES = ('cwallet.sso', 'ewallet.p12', 'tnsnames.ora', 'sqlnet.ora')
+
 
 
 def load_oracle_targets():
@@ -38,22 +39,18 @@ def load_oracle_targets():
 def wallet_directory(alias, root=None):
     if not isinstance(alias, str) or not ALIAS.fullmatch(alias):
         raise ValueError('Invalid Oracle wallet alias')
-    root = Path(root or os.environ.get('ORACLE_WALLET_ROOT', '/wallets')).resolve(strict=True)
-    wallet = (root / alias).resolve(strict=True)
-    if not wallet.is_relative_to(root) or wallet == root:
-        raise ValueError('Oracle wallet escapes its mounted directory')
-    for name in BUNDLE_FILES:
-        path = wallet / name
-        if not path.is_file() or not path.resolve().is_relative_to(wallet):
-            raise ValueError('Oracle wallet bundle is incomplete or contains an unsafe file')
+    root = Path(root or os.environ.get('ORACLE_WALLET_ROOT', '/wallets'))
+    wallet = resolve_wallet(root, alias)
+    entry = entries(wallet)[alias]
+    if entry["account"].upper() in {"SYS", "SYSTEM"} or entry["privilege"] != "normal":
+        raise SharedWalletError("Monitor requires an ordinary account entry in the shared wallet")
     return wallet
 
 
 def check_oracle(alias):
     try:
         wallet = wallet_directory(alias)
-        # Client configuration is global per process. Isolate aliases so one wallet
-        # cannot cause a later target to use another wallet's Oracle Net settings.
+        # Pin the same shared wallet snapshot for configuration and password retrieval.
         result = subprocess.run(
             [sys.executable, str(Path(__file__).with_name('oracle_wallet_worker.py'))],
             input=json.dumps({'alias': alias, 'wallet_dir': str(wallet),

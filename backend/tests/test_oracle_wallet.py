@@ -16,11 +16,13 @@ def target(tmp_path):
     registry.mkdir()
     entry = Registry(registry).save(DatabaseInput(name='canonical-prod', host='db.internal', service_or_sid='APPDB', environment='prod', access={'monitor': Access(alias='existing-reader')}), 'watchword')
     wallets = tmp_path / 'wallets'
-    wallet = wallets / '.generations/existing-reader/generation'
+    wallet = wallets / '.generations/11111111-1111-1111-1111-111111111111'
     wallet.mkdir(parents=True)
     for name in BUNDLE_FILES:
         (wallet / name).write_bytes(b'test-only')
-    (wallets / 'existing-reader').symlink_to('.generations/existing-reader/generation')
+        (wallet / name).chmod(0o600)
+    (wallet / 'entries.json').write_text(json.dumps({'version':1,'entries':{'existing-reader':{'account':'MONITOR_RO','privilege':'normal','dbid':'1','db_unique_name':'TEST','container':'PDB','host':'db.internal','port':1521,'service':'APPDB'}}}))
+    (wallets / 'current').symlink_to('.generations/11111111-1111-1111-1111-111111111111')
     return registry, entry, wallets, wallet
 
 
@@ -47,7 +49,7 @@ def test_unsafe_wallet_alias_symlinks_and_missing_files(tmp_path):
     outside = tmp_path / 'outside'
     outside.mkdir()
     (wallets / 'escape').symlink_to(outside)
-    with pytest.raises(ValueError, match='escapes'):
+    with pytest.raises(ValueError, match='not in'):
         wallet_directory('escape', wallets)
     (wallet / 'sqlnet.ora').unlink()
     with pytest.raises(ValueError, match='incomplete'):
@@ -66,7 +68,7 @@ def test_login_process_is_bounded_and_contains_no_credentials(tmp_path, monkeypa
     assert run.call_args.kwargs['timeout'] == 8
 
 
-def test_worker_uses_external_auth_and_rejects_admin_wallet(monkeypatch):
+def test_worker_reads_shared_entry_and_rejects_admin_session(monkeypatch):
     import oracle_wallet_worker as worker
     conn = Mock()
     conn.__enter__ = Mock(return_value=conn)
@@ -78,9 +80,10 @@ def test_worker_uses_external_auth_and_rejects_admin_wallet(monkeypatch):
     connect = Mock(return_value=conn)
     monkeypatch.setattr(worker.oracledb, 'init_oracle_client', Mock())
     monkeypatch.setattr(worker.oracledb, 'connect', connect)
+    monkeypatch.setattr(worker,'read_credentials',lambda *args: ('MONITOR_RO','fixture-secret'))
     cursor.fetchone.side_effect = [('MONITOR_RO','MONITOR_RO'), (1,)]
     assert worker.check({'wallet_dir':'/wallets/existing-reader','alias':'existing-reader'}) == {'ok':True}
-    connect.assert_called_once_with(dsn='existing-reader', externalauth=True)
+    connect.assert_called_once_with(user='MONITOR_RO',password='fixture-secret',dsn='existing-reader')
     cursor.fetchone.side_effect = [('SYS','SYS')]
     with pytest.raises(ValueError, match='Administrative'):
         worker.check({'wallet_dir':'/wallets/existing-reader','alias':'existing-reader'})

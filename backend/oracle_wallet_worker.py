@@ -1,12 +1,16 @@
-"""One fresh Oracle SEPS login; no application-supplied database password."""
+"""One fresh shared Oracle wallet login; no application-supplied database password."""
 import json
 import sys
 import oracledb
+from pathlib import Path
+from shared_wallet import read_credentials
 
 
 def check(config):
     oracledb.init_oracle_client(lib_dir=config.get('client_lib_dir'), config_dir=config['wallet_dir'])
-    with oracledb.connect(dsn=config['alias'], externalauth=True) as connection:
+    account, password = read_credentials(Path(config['wallet_dir']), config['alias'])
+    with oracledb.connect(user=account, password=password, dsn=config['alias']) as connection:
+        password = None
         connection.call_timeout = 5000
         connection.module = 'monitor'
         with connection.cursor() as cursor:

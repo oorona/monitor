@@ -18,6 +18,6 @@ never exposed through the browser API.
 See [configuration](CONFIGURATION.md) and [migration](MIGRATION.md) for runtime
 settings, legacy export support, and deployment commands.
 
-Oracle targets use canonical identities from the shared registry and SEPS wallets mounted read-only. Each login runs in an isolated Oracle Client process.
+Oracle targets use canonical identities from the shared registry and the one shared Oracle wallet mounted read-only. Each login runs in an isolated Oracle Client process.
 
 MCP tools use an atomically published status snapshot with freshness metadata. Its token has a dedicated persistent auth volume. Failed ICMP checks leave database checks unknown. MCP calls read cached observations without performing network checks.

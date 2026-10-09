@@ -3,11 +3,11 @@
 Use the shared DBA Tools deployment to run Monitor alongside Watchword, Rollcall,
 and Muster. The suite installer builds both Monitor images and starts an empty
 configuration in a persistent Docker volume. The default URL is
-`http://localhost:3103`. See [migration](MIGRATION.md) to transfer an existing setup.
+`http://localhost:3103`. Follow [the fresh suite installation](https://github.com/oorona/watchword/blob/main/docs/INSTALLATION.md), which creates one `.env` in the Watchword checkout and initializes the shared wallet.
 
 The server needs Docker Engine, Compose v2, access to the four repositories, and
 network/DNS access to the monitored systems. Node, Python, and Oracle software are
-built into images. Monitor includes Oracle Client for Thick-mode SEPS authentication and uses unprivileged ICMP sockets.
+built into images. Monitor includes Oracle Client for Thick-mode shared wallet connections and uses unprivileged ICMP sockets.
 
 ## Standalone Docker
 
@@ -19,7 +19,7 @@ mkdir -p secrets
 ```
 
 Configure Oracle targets in the shared registry with Monitor wallet access. Set
-DATABASE_REGISTRY_HOST_PATH and MONITOR_WALLET_HOST_PATH to the host directories.
+`DATABASE_REGISTRY_HOST_PATH` and `WALLET_HOST_PATH` to the exact same host directories used by Watchword and the other apps. Watchword must initialize the single shared wallet and add this account entry first.
 Edit the example configuration and create a private secret file for each non-Oracle database
 password reference, named `secrets/SECRET_NAME` or `secrets/SECRET_NAME.txt`. Secret
 files must be readable by container UID 1000. Then start Docker:

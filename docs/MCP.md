@@ -34,7 +34,7 @@ outage duration is available in this version.
 Only status fields are returned. Password references, usernames, wallet locations,
 URL user information, query strings, fragments and raw driver diagnostics are
 excluded. Tools cannot modify configuration, run SQL, restart services or rotate
-credentials. Oracle target credentials continue to live exclusively in SEPS wallets.
+credentials. Oracle target credentials continue to live exclusively in the one shared Oracle wallet.
 
 ## Authentication and setup
 

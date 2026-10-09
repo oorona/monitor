@@ -1,13 +1,14 @@
 FROM python:3.13.7-slim-bookworm AS oracle-client
 ARG TARGETARCH
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates unzip && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates unzip default-jdk-headless && rm -rf /var/lib/apt/lists/*
 COPY oracle/ /build/oracle/
 RUN python /build/oracle/install.py --architecture "$TARGETARCH"
+RUN mkdir -p /opt/oracle/client/classes && javac -cp '/opt/oracle/client/jlib/*' -d /opt/oracle/client/classes /build/oracle/WalletSecret.java
 
 FROM python:3.13-slim-bookworm AS runtime
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
-RUN apt-get update && apt-get install -y --no-install-recommends libaio1 libnsl2 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends libaio1 libnsl2 default-jre-headless && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY --from=oracle-client /opt/oracle/client/ /opt/oracle/client/

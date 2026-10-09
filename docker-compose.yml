@@ -28,7 +28,7 @@ services:
     - ./servers.yaml:/config/servers.yaml:ro
     - ./secrets:/run/secrets:ro
     - ${DATABASE_REGISTRY_HOST_PATH:?Set shared database registry directory}:/registry:ro
-    - ${MONITOR_WALLET_HOST_PATH:?Set Oracle wallet directory}:/wallets:ro
+    - ${WALLET_HOST_PATH:?Set the one shared Oracle wallet directory}:/wallets:ro
     - ./mcp-auth:/run/monitor-auth:ro
     healthcheck:
       test:

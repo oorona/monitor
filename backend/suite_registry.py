@@ -119,9 +119,13 @@ class Document(Strict):
             ids = [d.access[app].target_id for d in self.databases if app in d.access and d.access[app].target_id]
             if len(set(ids)) != len(ids):
                 raise ValueError("Application target IDs must be unique")
-            aliases = [d.access[app].alias for d in self.databases if app in d.access and d.access[app].alias]
-            if len(set(aliases)) != len(aliases):
-                raise ValueError("A wallet alias may belong to only one database per app")
+        aliases = {}
+        for database in self.databases:
+            for access in database.access.values():
+                if access.alias:
+                    if access.alias in aliases and aliases[access.alias] != database.id:
+                        raise ValueError("A shared wallet entry alias may belong to only one database")
+                    aliases[access.alias] = database.id
         return self
 
 
@@ -168,7 +172,7 @@ class Registry:
 
     def save(self, body: DatabaseInput, app: str, database_id=None, revision=None, new_id=None):
         if body.dialect == "oracle" and any(a.mode != "wallet" for a in body.access.values()):
-            raise RegistryConflict("Oracle application access requires an external password-store wallet")
+            raise RegistryConflict("Oracle application access requires the shared Oracle wallet")
         with self._lock(True):
             document = self._read()
             existing = next((d for d in document.databases if d.id == database_id), None)
@@ -190,7 +194,7 @@ class Registry:
                             raise RegistryConflict("Application target IDs cannot be reassigned")
                         data["access"][tool]["target_id"] = previous.target_id
             if body.dialect == "oracle" and any(a["mode"] != "wallet" for a in data["access"].values()):
-                raise RegistryConflict("Oracle application access requires an external password-store wallet")
+                raise RegistryConflict("Oracle application access requires the shared Oracle wallet")
             value = Database(**data, id=existing.id if existing else (new_id or uuid4()),
                              revision=existing.revision + 1 if existing else 1, updated_by=app)
             entries = [d for d in document.databases if d.id != value.id] + [value]
