@@ -1,26 +1,87 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "./suite-theme.css";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--border);
+  --color-fg: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-crit: var(--crit);
+  --color-crit-bg: var(--crit-bg);
+  --color-info-bg: var(--info-bg);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
 }
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center gap-1.5 rounded-md border border-line bg-panel px-3 py-1.5 text-sm font-medium text-fg hover:bg-panel-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply border-accent bg-accent text-accent-fg hover:opacity-90 hover:bg-accent;
+  }
+  .btn-danger {
+    @apply border-crit text-crit hover:bg-crit-bg;
+  }
+  .btn-sm {
+    @apply px-2 py-1 text-xs;
+  }
+  .input {
+    @apply w-full rounded-md border border-line bg-panel px-3 py-2.5 text-sm text-fg placeholder:text-muted focus:border-accent focus:outline-none;
+  }
+  .label {
+    @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+  .card {
+    @apply rounded-[8px] border border-line bg-panel;
+  }
+  .chip {
+    @apply inline-flex items-center rounded border border-line bg-panel-2 px-1.5 py-0.5 text-xs text-muted;
+  }
+  .link {
+    @apply text-accent hover:underline;
+  }
+  .code {
+    @apply rounded bg-panel-2 px-1 font-mono text-xs;
+  }
+}
+
+.sql-keyword { color: var(--sql-keyword); font-weight: 600; }
+.sql-function { color: var(--sql-function); }
+.sql-string { color: var(--sql-string); }
+.sql-number { color: var(--sql-number); }
+.sql-bind { color: var(--sql-bind); font-weight: 600; }
+.sql-comment { color: var(--sql-comment); font-style: italic; }
+.sql-operator { color: var(--sql-operator); }
+
+@layer components {
+  .eyebrow { @apply text-[10px] font-semibold uppercase tracking-[0.15em] text-muted; }
+  .metric-card { @apply rounded-[8px] border border-line bg-panel p-5; }
+  .workflow-card { @apply block rounded-[8px] border border-line bg-panel p-5 text-left transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md; }
+  .workflow-card.selected { @apply border-accent ring-2 ring-accent/15; }
+  .workflow-icon { @apply flex h-11 w-11 items-center justify-center rounded-xl bg-info-bg text-accent; }
+  .context-strip { @apply flex items-center gap-3 rounded-[8px] border border-line bg-panel px-4 py-3 text-sm; }
+  .table-toolbar { @apply flex flex-wrap items-center gap-3 rounded-t-xl border border-b-0 border-line bg-panel p-3; }
+}
+.inspector { position: fixed; inset: 0 0 0 auto; margin: 0; width: min(640px, 100vw); height: 100dvh; max-height: 100dvh; max-width: 100vw; background: var(--panel); color: var(--text); border: 0; border-left: 1px solid var(--border); padding: 0; box-shadow: -20px 0 80px #0003; }
+.inspector::backdrop { background: var(--suite-overlay); backdrop-filter: blur(2px); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }

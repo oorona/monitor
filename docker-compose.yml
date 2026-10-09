@@ -1,34 +1,33 @@
+name: monitor
 services:
   backend:
     build: ./backend
-    ports:
-      - "9000:8000"
-    volumes:
-      - ./servers.yaml:/app/servers.yaml
-    secrets:
-      - db_password_prod
-      - db_password_test
-      - baseline
+    user: 1000:1000
+    cap_drop: [ALL]
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    sysctls:
+      net.ipv4.ping_group_range: '0 2147483647'
+    tmpfs: [/tmp]
+    restart: unless-stopped
     environment:
-      # We don't need specific env vars for secrets anymore as we read by name from /run/secrets/
-      - PYTHONUNBUFFERED=1
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
+      MONITOR_CONFIG_PATH: /config/servers.yaml
+      MONITOR_SECRETS_PATH: /run/secrets
+    volumes:
+      - ./servers.yaml:/config/servers.yaml:ro
+      - ./secrets:/run/secrets:ro
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    extra_hosts: ['host.docker.internal:host-gateway']
   frontend:
     build: ./frontend
-    ports:
-      - "4000:3000"
+    ports: ['127.0.0.1:4000:3000']
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:9000
-      - NEXT_PUBLIC_REFRESH_INTERVAL=30000
+      MONITOR_API_URL: http://backend:8000
+    restart: unless-stopped
     depends_on:
-      - backend
-
-secrets:
-  db_password_prod:
-    file: ./secrets/db_password_prod.txt
-  db_password_test:
-    file: ./secrets/db_password_test.txt
-  baseline:
-    file: ./secrets/baseline.txt
+      backend:
+        condition: service_healthy

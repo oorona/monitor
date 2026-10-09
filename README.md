@@ -1,4 +1,9 @@
-# Server Monitor
+# Monitor
+
+Monitor uses the shared DBA suite theme and runs in Docker alongside Watchword,
+Rollcall, and Muster. See [configuration transfer and deployment](docs/MIGRATION.md)
+for moving an existing installation without direct access to its server.
+
 
 A real-time infrastructure monitoring platform built with a modern full-stack architecture, providing unified visibility into database and application server health across multiple environments.
 
@@ -15,11 +20,11 @@ A real-time infrastructure monitoring platform built with a modern full-stack ar
 - **Next.js 16** - React framework with App Router architecture
 - **React 19** - Latest React with concurrent features and hooks-based state management
 - **TypeScript** - Strongly-typed codebase with interface definitions for API contracts
-- **Tailwind CSS 4** - Utility-first CSS framework for responsive, dark-themed UI
+- **Tailwind CSS 4** - Utility-first CSS framework for responsive, suite-themed UI
 - **Client-Side Rendering** - `'use client'` directive with `useEffect` and `useState` hooks
 
 ### Database Connectivity
-- **Oracle Database Driver** - `oracledb` with Oracle Instant Client integration
+- **Oracle Database Driver** - `oracledb` thin mode
 - **PostgreSQL Driver** - `psycopg2` with native binary support
 - **MySQL Connector** - `mysql-connector-python` for MySQL/MariaDB support
 - **Connection Pooling** - Per-check connection lifecycle with automatic cleanup
@@ -38,7 +43,7 @@ A real-time infrastructure monitoring platform built with a modern full-stack ar
 
 ### Configuration Management
 - **YAML Configuration** - Declarative server definitions with `pyyaml`
-- **Environment Variables** - Runtime configuration via `NEXT_PUBLIC_*` variables
+- **Environment Variables** - Server-side API routing and configurable backend polling
 - **Secrets Fallback** - Docker secrets with environment variable fallback
 
 ## Monitoring Capabilities

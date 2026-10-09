@@ -1,7 +1,6 @@
 export interface DatabaseDetails {
     port: number;
     username: string;
-    password: string; // This is the secret name, but we might not want to display it?
 }
 
 export interface DatabaseStatus {

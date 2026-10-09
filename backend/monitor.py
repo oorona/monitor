@@ -38,7 +38,7 @@ def check_oracle(host: str, port: int, dbname: str, user: str, password_secret_n
 
     dsn = f"{host}:{port}/{dbname}"
     try:
-        connection = oracledb.connect(user=user, password=password, dsn=dsn, timeout=5)
+        connection = oracledb.connect(user=user, password=password, dsn=dsn, tcp_connect_timeout=5)
         connection.close()
         return True, None
     except Exception as e:
@@ -151,7 +151,7 @@ def poll_servers():
                         server_results["databases"][db_name] = {
                             "status": db_status,
                             "error": db_error,
-                            "details": details
+                            "details": {k: v for k, v in details.items() if k != "password"}
                         }
                 
                 results["database"][env][server_name] = server_results
@@ -161,7 +161,7 @@ def poll_servers():
         for env, servers in config["servers"]["application"].items():
             results["application"][env] = {}
             for server_name, details in servers.items():
-                urls = details.get("urls", [])
+                urls = list(details.get("urls", []))
                 if "url" in details:
                     urls.append(details["url"])
                 
@@ -186,7 +186,7 @@ def poll_servers():
                     "ping": is_alive,
                     "ping_error": ping_error,
                     "urls": url_statuses,
-                    "details": details
+                    "details": {k: v for k, v in details.items() if k != "password"}
                 }
     
     global server_status_cache

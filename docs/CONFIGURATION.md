@@ -93,129 +93,40 @@ servers:
           - https://staging.example.com
 ```
 
-## Secrets Management
+## Configuration and secrets in the suite
 
-### Docker Secrets (Recommended)
+The suite mounts `dba-monitor-config` read-only at `/config` in the backend. The
+configuration is `/config/state/servers.yaml`; referenced passwords are files under
+`/config/state/secrets/`. Import a bundle using the suite's `monitor-import` command.
+See [migration](MIGRATION.md) for export/import commands and verification.
 
-Docker secrets are mounted at `/run/secrets/<secret_name>`. Create secret files in the `secrets/` directory:
+Standalone Docker mounts the host `servers.yaml` at `/config/servers.yaml` and the
+host `secrets/` directory at `/run/secrets`, both read-only. Secret file names may
+be `SECRET_NAME` or `SECRET_NAME.txt`. Environment fallback uses the uppercased
+secret name. Password values and secret references are excluded from API results.
 
-```bash
-mkdir -p secrets
-echo "your_secure_password" > secrets/db_password_prod.txt
-echo "test_password" > secrets/db_password_test.txt
-```
+## Runtime settings
 
-Define secrets in `docker-compose.yml`:
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `MONITOR_CONFIG_PATH` | Legacy relative `servers.yaml` lookup | Backend configuration file |
+| `MONITOR_SECRETS_PATH` | `/run/secrets` | Password files directory |
+| `MONITOR_POLL_INTERVAL` | `60` | Backend polling interval in seconds |
+| `MONITOR_API_URL` | `http://monitor-backend:8000` | Server-side frontend proxy destination |
+| `MONITOR_HTTP_PORT` | `3103` | Suite browser port |
+| `MONITOR_PROJECT_HOST` | `localhost` | Optional Traefik hostname |
 
-```yaml
-secrets:
-  db_password_prod:
-    file: ./secrets/db_password_prod.txt
-  db_password_test:
-    file: ./secrets/db_password_test.txt
-```
+The dashboard fetches `/api/status` every 30 seconds when auto refresh is enabled.
+Browser API addresses no longer need build-time `NEXT_PUBLIC_*` settings. Configure
+local development with `MONITOR_API_URL=http://127.0.0.1:8000`.
 
-### Environment Variables (Fallback)
+## Network checks
 
-If a Docker secret is not found, the system falls back to environment variables. The secret name is converted to uppercase:
+ICMP checks use a 2-second timeout, database connections a 5-second connection
+timeout, and HTTP checks a 10-second timeout. HTTP health checks require status 200
+and follow redirects. The current polling behavior skips database connections
+when host ICMP fails. Ensure intranet DNS/routing and ICMP access from the new server.
 
-```bash
-export DB_PASSWORD_PROD="your_secure_password"
-export DB_PASSWORD_TEST="test_password"
-```
-
-## Environment Variables
-
-### Backend Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PYTHONUNBUFFERED` | `1` | Ensures real-time log output |
-
-### Frontend Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:9000` | Backend API endpoint |
-| `NEXT_PUBLIC_REFRESH_INTERVAL` | `30000` | Auto-refresh interval in milliseconds |
-| `NODE_ENV` | - | Set to `production` for container builds |
-
-### Setting Environment Variables
-
-#### In Docker Compose
-
-```yaml
-services:
-  frontend:
-    environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
-      - NEXT_PUBLIC_REFRESH_INTERVAL=60000
-```
-
-#### For Local Development
-
-```bash
-export NEXT_PUBLIC_API_URL=http://localhost:8000
-export NEXT_PUBLIC_REFRESH_INTERVAL=15000
-npm run dev
-```
-
-## Docker Compose Configuration
-
-### Port Mapping
-
-| Service | Container Port | Host Port |
-|---------|----------------|-----------|
-| Backend | 8000 | 9000 |
-| Frontend | 3000 | 4000 |
-
-### Modifying Ports
-
-Edit `docker-compose.yml`:
-
-```yaml
-services:
-  backend:
-    ports:
-      - "8080:8000"  # Change host port to 8080
-  frontend:
-    ports:
-      - "3000:3000"  # Change host port to 3000
-```
-
-### Volume Mounts
-
-The `servers.yaml` configuration file is mounted into the backend container:
-
-```yaml
-volumes:
-  - ./servers.yaml:/app/servers.yaml
-```
-
-## Polling Configuration
-
-### Polling Interval
-
-The backend polls all servers every 60 seconds. To modify this, edit `backend/main.py`:
-
-```python
-# Change from 60 to desired interval in seconds
-await asyncio.sleep(60)
-```
-
-### Connection Timeouts
-
-| Check Type | Timeout | File |
-|------------|---------|------|
-| Ping | 2 seconds | `backend/monitor.py` |
-| Database | 5 seconds | `backend/monitor.py` |
-| HTTP URL | 10 seconds | `backend/monitor.py` |
-
-To modify timeouts, edit the respective check functions in `backend/monitor.py`.
-
-## Security Considerations
-
-1. **Never commit secrets** - The `secrets/` directory and `servers.yaml` are in `.gitignore`
-2. **Restrict CORS in production** - Update `backend/main.py` to specify allowed origins
-3. **Use HTTPS** - Place a reverse proxy (nginx, Traefik) in front of the services
-4. **Network isolation** - Run in a private network with controlled access
+Keep configuration archives and secret files out of Git. The suite binds browser
+ports to loopback by default. Remote access requires private ingress or an
+authenticated reverse proxy; Monitor itself has no UI login.

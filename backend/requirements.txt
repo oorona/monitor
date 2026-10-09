@@ -1,8 +1,8 @@
-fastapi
-uvicorn
-pyyaml
-oracledb
-psycopg2-binary
-mysql-connector-python
-requests
-ping3
+fastapi==0.143.0
+uvicorn==0.54.0
+pyyaml==6.0.3
+oracledb==26.0.1
+psycopg2-binary==2.9.13
+mysql-connector-python==26.7.0
+requests==2.34.2
+ping3==5.1.6
