@@ -25,11 +25,12 @@ password reference, named `secrets/SECRET_NAME` or `secrets/SECRET_NAME.txt`. Se
 files must be readable by container UID 1000. Then start Docker:
 
 ```bash
+docker compose --profile bootstrap run --rm --build mcp-init
 docker compose up -d --build
 ```
 
-Open `http://localhost:4000`. The frontend proxies `/api/status` to the internal
-backend; the backend has no public port. Stop without deleting state with
+Open `http://localhost:4000`. The Nginx gateway routes website requests to the frontend and `/mcp` to the
+backend. The frontend proxies `/api/status` to the internal backend; the backend has no public port. Stop without deleting state with
 `docker compose stop`.
 
 ## Local development
@@ -67,8 +68,11 @@ npx tsc --noEmit
 npm run build
 ```
 
-Migration tests require pytest and PyYAML:
+Backend tests require the backend dependencies plus pytest and pytest-asyncio:
 
 ```bash
+python3 -m pip install -r backend/requirements.txt pytest pytest-asyncio
 PYTHONPATH=backend python3 -m pytest backend/tests -q
 ```
+
+The suite has frontend, backend and gateway containers for Monitor. Read-only MCP uses a separate private bearer token; see [MCP](MCP.md).

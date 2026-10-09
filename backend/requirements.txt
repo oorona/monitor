@@ -7,3 +7,4 @@ mysql-connector-python==26.7.0
 requests==2.34.2
 ping3==5.1.6
 pydantic==2.14.0
+fastmcp==4.0.11

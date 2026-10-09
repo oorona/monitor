@@ -78,3 +78,7 @@ See [specs/specs.txt](specs/specs.txt) for detailed technical specifications.
 ## License
 
 See [LICENSE](LICENSE) for license information.
+
+## MCP service status
+
+Monitor provides read-only authenticated MCP tools at `/mcp` on its existing website port. Ask a connected assistant for service status, failures and environment summaries. See [MCP setup and tools](docs/MCP.md) for the private client token and deployment instructions.

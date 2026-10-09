@@ -50,3 +50,5 @@ connections 5 seconds, and HTTP checks 10 seconds. Host ICMP failure skips datab
 checks. DSN-only Oracle entries without a host skip ICMP and use their wallet.
 The dashboard supports environment filtering, search, manual refresh and a
 30-second automatic refresh.
+
+MCP uses MONITOR_MCP_TOKEN_FILE (default /run/monitor-auth/token), MONITOR_PROJECT_HOST for allowed Host headers, and MONITOR_SITE_URL for the allowed browser origin. See [MCP](MCP.md).

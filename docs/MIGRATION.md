@@ -1,7 +1,7 @@
 # Move Monitor into the DBA suite
 
 Monitor runs alongside Watchword, Rollcall, and Muster as the `monitor-backend` and
-`monitor-frontend` services in the `dba-tools` Docker Compose project. Its default
+`monitor-frontend` and `monitor-gateway` services in the `dba-tools` Docker Compose project. Its default
 browser URL is `http://localhost:3103`. The browser uses `/api/status` on that same
 origin; the backend has no published host port.
 
@@ -145,3 +145,5 @@ Set `MONITOR_HTTP_PORT`, `MONITOR_PROJECT_HOST`, and, for Traefik,
 the browser-facing origin; the frontend does not need it to contact its API.
 `MONITOR_POLL_INTERVAL` controls backend polling in seconds; the dashboard refreshes
 every 30 seconds and supports manual refresh, search, and environment filters.
+
+MCP authentication is initialized separately in dba-monitor-auth and is not included in configuration bundles. Configure clients with the new server's token after migration; see [MCP](MCP.md).

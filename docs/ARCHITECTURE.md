@@ -1,6 +1,6 @@
 # Architecture
 
-The browser connects only to the Next.js frontend. Its `/api/status` handler
+An Nginx gateway serves the shared browser/MCP port, routing website traffic to the Next.js frontend and `/mcp` directly to the authenticated backend. Its `/api/status` handler
 forwards status requests server-side to the FastAPI backend on the internal Docker
 network, with caching disabled. Backend ports are not published to the host.
 
@@ -19,3 +19,5 @@ See [configuration](CONFIGURATION.md) and [migration](MIGRATION.md) for runtime
 settings, legacy export support, and deployment commands.
 
 Oracle targets use canonical identities from the shared registry and SEPS wallets mounted read-only. Each login runs in an isolated Oracle Client process.
+
+MCP tools use an atomically published status snapshot with freshness metadata. Its token has a dedicated persistent auth volume. Failed ICMP checks leave database checks unknown. MCP calls read cached observations without performing network checks.

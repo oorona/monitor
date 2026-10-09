@@ -7,13 +7,11 @@ from ping3 import ping
 from typing import Dict, List, Any
 from config import load_config, get_secret
 from oracle_wallet import check_oracle, load_oracle_targets
+from status_snapshot import publish, get_snapshot
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
-# Global state to store server statuses
-server_status_cache = {}
 
 def check_ping(host: str) -> (bool, str):
     """Pings a host to check if it's reachable."""
@@ -133,6 +131,12 @@ def poll_servers():
                             "details": {k: v for k, v in details.items() if k != "password"}
                         }
                 
+                if not is_alive:
+                    for db_name, details in databases.items():
+                        server_results['databases'][db_name] = {
+                            'status': None, 'error': 'Connection check skipped because host ICMP failed',
+                            'details': {k: v for k, v in details.items() if k != 'password'},
+                        }
                 results["database"][env][server_name] = server_results
 
     # Oracle names, environments and wallet aliases come from the same registry
@@ -145,7 +149,7 @@ def poll_servers():
             environment[host] = {'ping': alive, 'ping_error': error, 'databases': {}}
         server = environment[host]
         alias = database.access['monitor'].alias
-        healthy, error = check_oracle(alias) if server['ping'] else (False, 'Host ICMP check failed')
+        healthy, error = check_oracle(alias) if server['ping'] else (None, 'Connection check skipped because host ICMP failed')
         server['databases'][database.name] = {
             'status': healthy, 'error': error,
             'details': {'type': 'ora', 'database_id': str(database.id), 'auth_mode': 'wallet', 'alias': alias},
@@ -184,10 +188,9 @@ def poll_servers():
                     "details": {k: v for k, v in details.items() if k != "password"}
                 }
     
-    global server_status_cache
-    server_status_cache = results
+    publish(results)
     logger.info("Server poll completed.")
 
 def get_status():
     """Returns the latest cached status."""
-    return server_status_cache
+    return get_snapshot()["status"]

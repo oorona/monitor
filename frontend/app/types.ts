@@ -1,10 +1,12 @@
 export interface DatabaseDetails {
-    port: number;
-    username: string;
+    port?: number;
+    username?: string;
+    type?: string;
+    database_id?: string;
 }
 
 export interface DatabaseStatus {
-    status: boolean;
+    status: boolean | null;
     error?: string;
     details: DatabaseDetails;
 }

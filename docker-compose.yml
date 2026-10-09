@@ -3,12 +3,15 @@ services:
   backend:
     build: ./backend
     user: 1000:1000
-    cap_drop: [ALL]
+    cap_drop:
+    - ALL
     read_only: true
-    security_opt: [no-new-privileges:true]
+    security_opt:
+    - no-new-privileges:true
     sysctls:
-      net.ipv4.ping_group_range: '0 2147483647'
-    tmpfs: [/tmp]
+      net.ipv4.ping_group_range: 0 2147483647
+    tmpfs:
+    - /tmp
     restart: unless-stopped
     environment:
       SUITE_REGISTRY_ROOT: /registry
@@ -16,23 +19,110 @@ services:
       ORACLE_CLIENT_LIB_DIR: /opt/oracle/client/lib
       MONITOR_CONFIG_PATH: /config/servers.yaml
       MONITOR_SECRETS_PATH: /run/secrets
+      MONITOR_PROJECT_HOST: ${MONITOR_PROJECT_HOST:-localhost}
+      MONITOR_SITE_URL: ${MONITOR_SITE_URL:-http://localhost:4000}
+      MONITOR_MCP_TOKEN_FILE: /run/monitor-auth/token
     volumes:
-      - ./servers.yaml:/config/servers.yaml:ro
-      - ./secrets:/run/secrets:ro
-      - ${DATABASE_REGISTRY_HOST_PATH:?Set shared database registry directory}:/registry:ro
-      - ${MONITOR_WALLET_HOST_PATH:?Set Oracle wallet directory}:/wallets:ro
+    - ./servers.yaml:/config/servers.yaml:ro
+    - ./secrets:/run/secrets:ro
+    - ${DATABASE_REGISTRY_HOST_PATH:?Set shared database registry directory}:/registry:ro
+    - ${MONITOR_WALLET_HOST_PATH:?Set Oracle wallet directory}:/wallets:ro
+    - ./mcp-auth:/run/monitor-auth:ro
     healthcheck:
-      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://localhost:8000/health')
       interval: 30s
       timeout: 5s
       retries: 3
-    extra_hosts: ['host.docker.internal:host-gateway']
+    extra_hosts:
+    - host.docker.internal:host-gateway
+    networks:
+      default:
+        aliases:
+        - monitor-backend
   frontend:
     build: ./frontend
-    ports: ['127.0.0.1:4000:3000']
     environment:
       MONITOR_API_URL: http://backend:8000
     restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy
+    healthcheck:
+      test:
+      - CMD
+      - node
+      - -e
+      - 'fetch(''http://127.0.0.1:3000/'').then(r => process.exit(r.ok ? 0 : 1)).catch(()
+        => process.exit(1))'
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      default:
+        aliases:
+        - monitor-frontend
+  gateway:
+    build: ./gateway
+    user: 1000:1000
+    read_only: true
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    pids_limit: 100
+    mem_limit: 64m
+    tmpfs:
+    - /tmp:size=16m,mode=1777
+    - /var/cache/nginx:size=16m,mode=1777
+    - /var/run:size=1m,mode=1777
+    restart: unless-stopped
+    ports:
+    - ${HTTP_BIND:-127.0.0.1}:${MONITOR_HTTP_PORT:-4000}:8080
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -q
+      - --spider
+      - http://127.0.0.1:8080/gateway-health
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  mcp-init:
+    profiles:
+    - bootstrap
+    user: 0:0
+    read_only: true
+    network_mode: none
+    cap_drop:
+    - ALL
+    cap_add:
+    - CHOWN
+    - DAC_OVERRIDE
+    - FOWNER
+    security_opt:
+    - no-new-privileges:true
+    tmpfs:
+    - /tmp
+    entrypoint:
+    - python
+    - mcp_auth.py
+    command:
+    - --destination
+    - /auth
+    - --uid
+    - '1000'
+    - --gid
+    - '1000'
+    volumes:
+    - ./mcp-auth:/auth
+    build: ./backend
