@@ -1,4 +1,4 @@
-"""DBA suite registry v1. Keep this contract identical in all four repositories."""
+"""DBA Tools registry v1. Keep this contract identical in all four repositories."""
 import fcntl
 import os
 import re

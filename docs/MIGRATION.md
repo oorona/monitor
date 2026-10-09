@@ -1,4 +1,4 @@
-# Move Monitor into the DBA suite
+# Move Monitor into the DBA Tools
 
 Monitor runs alongside Watchword, Rollcall, and Muster as the `monitor-backend` and
 `monitor-frontend` and `monitor-gateway` services in the `dba-tools` Docker Compose project. Its default

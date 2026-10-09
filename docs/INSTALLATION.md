@@ -1,6 +1,6 @@
 # Installation
 
-Use the shared DBA suite deployment to run Monitor alongside Watchword, Rollcall,
+Use the shared DBA Tools deployment to run Monitor alongside Watchword, Rollcall,
 and Muster. The suite installer builds both Monitor images and starts an empty
 configuration in a persistent Docker volume. The default URL is
 `http://localhost:3103`. See [migration](MIGRATION.md) to transfer an existing setup.

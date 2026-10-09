@@ -1,6 +1,6 @@
 # Monitor
 
-Monitor uses the shared DBA suite theme and runs in Docker alongside Watchword,
+Monitor uses the shared DBA Tools theme and runs in Docker alongside Watchword,
 Rollcall, and Muster. See [configuration transfer and deployment](docs/MIGRATION.md)
 for moving an existing installation without direct access to its server.
 
