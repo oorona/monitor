@@ -6,7 +6,7 @@ import yaml
 
 SECRET_NAME = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}\Z")
 
-def validate_config(config):
+def validate_config(config, *, allow_legacy_oracle=False):
     if not isinstance(config, dict) or not isinstance(config.get('servers'), dict):
         raise ValueError('Configuration requires a servers mapping')
     secrets = set()
@@ -23,6 +23,8 @@ def validate_config(config):
                     for details in entries.values():
                         if not isinstance(details, dict) or details.get('type', 'ora') not in ('ora', 'pg', 'mysql'):
                             raise ValueError('Unsupported database definition')
+                        if details.get('type', 'ora') == 'ora' and not allow_legacy_oracle:
+                            raise ValueError('Oracle targets must be configured in the shared registry with Monitor wallet access; prepare the legacy bundle before importing')
                         name = details.get('password')
                         if not isinstance(name, str) or not SECRET_NAME.fullmatch(name):
                             raise ValueError('Database password must reference a safe secret name')

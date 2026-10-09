@@ -1,0 +1,16 @@
+{
+  "version": "19.32.0.0.0",
+  "architecture": "amd64",
+  "basic": {
+    "url": "https://download.oracle.com/otn_software/linux/instantclient/1932000/instantclient-basic-linux.x64-19.32.0.0.0dbru.zip",
+    "sha256": "1749ca1eb5f75b038f2b7ce0abc42eb4575928159259fc4fc851c54a8ca7b002"
+  },
+  "sqlplus": {
+    "url": "https://download.oracle.com/otn_software/linux/instantclient/1932000/instantclient-sqlplus-linux.x64-19.32.0.0.0dbru.zip",
+    "sha256": "865adc08d69461703d2a0fc4236545d2c94452a80ba3c774c0b56568af5a8dab"
+  },
+  "wallet_jars": {
+    "url": "https://download.oracle.com/otn-pub/otn_software/jdbc/1932/ojdbc8-full.tar.gz",
+    "sha1": "4a12db30c691b4b9c0e9ec34d170f0012243ad71"
+  }
+}

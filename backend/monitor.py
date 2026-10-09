@@ -1,12 +1,12 @@
 import time
 import logging
-import oracledb
 import psycopg2
 import mysql.connector
 import requests
 from ping3 import ping
 from typing import Dict, List, Any
 from config import load_config, get_secret
+from oracle_wallet import check_oracle, load_oracle_targets
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -24,25 +24,6 @@ def check_ping(host: str) -> (bool, str):
         return False, "Ping returned None or False"
     except Exception as e:
         logger.error(f"Ping failed for {host}: {e}")
-        return False, str(e)
-
-def check_oracle(host: str, port: int, dbname: str, user: str, password_secret_name: str) -> (bool, str):
-    """Checks connection to an Oracle database."""
-    password = get_secret(password_secret_name)
-    if not password:
-        return False, "Password not found"
-    
-    # Default port for Oracle
-    if not port:
-        port = 1521
-
-    dsn = f"{host}:{port}/{dbname}"
-    try:
-        connection = oracledb.connect(user=user, password=password, dsn=dsn, tcp_connect_timeout=5)
-        connection.close()
-        return True, None
-    except Exception as e:
-        logger.error(f"Oracle connection failed for {dsn}: {e}")
         return False, str(e)
 
 def check_postgres(host: str, port: int, dbname: str, user: str, password_secret_name: str) -> (bool, str):
@@ -138,9 +119,7 @@ def poll_servers():
                         
                         db_status = False
                         db_error = None
-                        if db_type == "ora":
-                            db_status, db_error = check_oracle(host, port, db_name, user, password_secret)
-                        elif db_type == "pg":
+                        if db_type == "pg":
                             db_status, db_error = check_postgres(host, port, db_name, user, password_secret)
                         elif db_type == "mysql":
                             db_status, db_error = check_mysql(host, port, db_name, user, password_secret)
@@ -155,6 +134,22 @@ def poll_servers():
                         }
                 
                 results["database"][env][server_name] = server_results
+
+    # Oracle names, environments and wallet aliases come from the same registry
+    # consumed by Watchword, Rollcall and Muster. Never derive an alias from a label.
+    for database in load_oracle_targets():
+        host = database.host or database.name
+        environment = results['database'].setdefault(database.environment, {})
+        if host not in environment:
+            alive, error = check_ping(host) if database.host else (True, None)
+            environment[host] = {'ping': alive, 'ping_error': error, 'databases': {}}
+        server = environment[host]
+        alias = database.access['monitor'].alias
+        healthy, error = check_oracle(alias) if server['ping'] else (False, 'Host ICMP check failed')
+        server['databases'][database.name] = {
+            'status': healthy, 'error': error,
+            'details': {'type': 'ora', 'database_id': str(database.id), 'auth_mode': 'wallet', 'alias': alias},
+        }
 
     # Check Application Servers
     if "application" in config["servers"]:

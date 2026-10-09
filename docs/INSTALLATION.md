@@ -7,7 +7,7 @@ configuration in a persistent Docker volume. The default URL is
 
 The server needs Docker Engine, Compose v2, access to the four repositories, and
 network/DNS access to the monitored systems. Node, Python, and Oracle software are
-built into images. Monitor uses the Oracle thin driver and unprivileged ICMP sockets.
+built into images. Monitor includes Oracle Client for Thick-mode SEPS authentication and uses unprivileged ICMP sockets.
 
 ## Standalone Docker
 
@@ -18,7 +18,9 @@ cp servers.yaml.example servers.yaml
 mkdir -p secrets
 ```
 
-Edit the example configuration and create a private secret file for every database
+Configure Oracle targets in the shared registry with Monitor wallet access. Set
+DATABASE_REGISTRY_HOST_PATH and MONITOR_WALLET_HOST_PATH to the host directories.
+Edit the example configuration and create a private secret file for each non-Oracle database
 password reference, named `secrets/SECRET_NAME` or `secrets/SECRET_NAME.txt`. Secret
 files must be readable by container UID 1000. Then start Docker:
 
@@ -32,7 +34,8 @@ backend; the backend has no public port. Stop without deleting state with
 
 ## Local development
 
-With Python 3.13 and Node 22 or later, install the pinned backend requirements and
+For local Oracle checks, install Oracle Client and configure ORACLE_CLIENT_LIB_DIR,
+SUITE_REGISTRY_ROOT, and ORACLE_WALLET_ROOT. With Python 3.13 and Node 22 or later, install the pinned backend requirements and
 frontend dependencies. Create `servers.yaml` and private secret files first.
 
 ```bash

@@ -4,6 +4,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from oracle_wallet import load_oracle_targets
 from config import load_config
 from monitor import poll_servers, get_status
 
@@ -21,6 +22,7 @@ async def background_poller():
 @asynccontextmanager
 async def lifespan(app):
     load_config()  # Fail startup on an invalid/missing imported configuration.
+    load_oracle_targets()
     task = asyncio.create_task(background_poller())
     yield
     task.cancel()

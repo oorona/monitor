@@ -51,6 +51,49 @@ The archive contains credentials in plaintext. Transfer it privately using your
 approved method. Keep it outside Git and restrict access to the deploying account.
 The bundle includes checksums to detect corruption; they are not a digital signature.
 
+## Prepare legacy Oracle targets before import
+
+The standalone exporter preserves the old instance and its existing password
+files. The new runtime refuses Oracle password bundles before stopping Monitor.
+First register each Oracle database in the shared registry, provision an ordinary
+account's SEPS wallet, and verify a fresh login. The suite wallet command accepts
+--namespace monitor. Alternatively share another ordinary consumer's directory
+through MONITOR_WALLET_HOST_PATH. Enable Monitor access with that exact alias.
+
+Create a private JSON mapping of each old environment/hostname/service to the
+shared database UUID copied from the Database Registry:
+
+```json
+{
+  "production/db.internal/APPDB": "REPLACE-WITH-SHARED-DATABASE-UUID"
+}
+```
+
+Using the Monitor backend Python environment, run:
+
+```bash
+python backend/wallet_migration.py --archive /private/monitor-config.tar.gz \
+  --registry /path/to/shared-registry/databases.json \
+  --mapping /private/oracle-target-map.json \
+  --wallets /path/to/monitor-consumer-wallet-directory \
+  --output /private/monitor-wallet-config.tar.gz
+```
+
+The same utility can run in the Monitor Docker image with those inputs mounted
+read-only and a separate private writable output directory. It is offline and
+never changes Oracle accounts, passwords, wallets or registry metadata.
+
+All Oracle entries must be explicitly mapped. Preparation checks matching host,
+port and service, enabled Monitor wallet access, and complete wallet files. It
+does not authenticate. It excludes Oracle YAML definitions and any unreferenced
+Oracle password files from the new bundle, preserving PostgreSQL/MySQL secrets
+and application URLs. Oracle checks now use canonical registry names.
+
+Import the prepared archive below. Keep the old instance and original export
+until real logins and checks match. For later server moves, transfer the shared
+registry and wallet backups separately; Monitor configuration exports do not
+contain wallets or registry state.
+
 ## Import on the shared deployment server
 
 The new installation initially shows an empty dashboard. Copy the export onto this
@@ -58,13 +101,13 @@ server, then use an absolute archive path:
 
 ```bash
 cd /home/iktdts/apps/website/watchword/deployment
-./start.sh monitor-import /absolute/path/monitor-config.tar.gz
+./start.sh monitor-import /absolute/path/monitor-wallet-config.tar.gz
 ```
 
 For the Git release installer:
 
 ```bash
-./scripts/deploy-suite.sh monitor-import /path/to/runtime /absolute/path/monitor-config.tar.gz
+./scripts/deploy-suite.sh monitor-import /path/to/runtime /absolute/path/monitor-wallet-config.tar.gz
 ```
 
 Import checks the full bundle and destination before stopping Monitor, rejects

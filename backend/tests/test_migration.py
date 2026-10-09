@@ -10,7 +10,7 @@ CONFIG = b'''servers:
     production:
       db.internal:
         APPDB:
-          type: ora
+          type: pg
           username: monitor
           password: db_password_prod
   application:

@@ -11,11 +11,16 @@ services:
     tmpfs: [/tmp]
     restart: unless-stopped
     environment:
+      SUITE_REGISTRY_ROOT: /registry
+      ORACLE_WALLET_ROOT: /wallets
+      ORACLE_CLIENT_LIB_DIR: /opt/oracle/client/lib
       MONITOR_CONFIG_PATH: /config/servers.yaml
       MONITOR_SECRETS_PATH: /run/secrets
     volumes:
       - ./servers.yaml:/config/servers.yaml:ro
       - ./secrets:/run/secrets:ro
+      - ${DATABASE_REGISTRY_HOST_PATH:?Set shared database registry directory}:/registry:ro
+      - ${MONITOR_WALLET_HOST_PATH:?Set Oracle wallet directory}:/wallets:ro
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Oracle's SEPS Java entry point. Passwords are supplied exclusively through stdin.
+set -eu
+client_root="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+exec /usr/bin/java -cp "$client_root/jlib/*" oracle.security.pki.OracleSecretStoreTextUI "$@"

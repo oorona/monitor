@@ -6,7 +6,7 @@ network, with caching disabled. Backend ports are not published to the host.
 
 FastAPI validates configuration before startup, schedules a background poller, and
 runs synchronous connection checks in a worker thread. It caches each completed
-poll in memory. Oracle uses python-oracledb thin mode; PostgreSQL and MySQL use their
+poll in memory. Oracle uses python-oracledb Thick mode; PostgreSQL and MySQL use their
 respective drivers. Network checks use unprivileged ICMP sockets and HTTP requests.
 
 The Docker suite uses one named volume for Monitor's YAML configuration and secret
@@ -17,3 +17,5 @@ never exposed through the browser API.
 
 See [configuration](CONFIGURATION.md) and [migration](MIGRATION.md) for runtime
 settings, legacy export support, and deployment commands.
+
+Oracle targets use canonical identities from the shared registry and SEPS wallets mounted read-only. Each login runs in an isolated Oracle Client process.

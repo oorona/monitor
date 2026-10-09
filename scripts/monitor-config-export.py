@@ -7,7 +7,7 @@ import yaml
 
 SECRET_NAME = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}\Z")
 
-def validate_config(config):
+def validate_config(config, *, allow_legacy_oracle=False):
     if not isinstance(config, dict) or not isinstance(config.get('servers'), dict):
         raise ValueError('Configuration requires a servers mapping')
     secrets = set()
@@ -24,6 +24,8 @@ def validate_config(config):
                     for details in entries.values():
                         if not isinstance(details, dict) or details.get('type', 'ora') not in ('ora', 'pg', 'mysql'):
                             raise ValueError('Unsupported database definition')
+                        if details.get('type', 'ora') == 'ora' and not allow_legacy_oracle:
+                            raise ValueError('Oracle targets must be configured in the shared registry with Monitor wallet access; prepare the legacy bundle before importing')
                         name = details.get('password')
                         if not isinstance(name, str) or not SECRET_NAME.fullmatch(name):
                             raise ValueError('Database password must reference a safe secret name')
@@ -98,7 +100,7 @@ def read_bundle(archive):
         raise ValueError('Unsupported bundle manifest')
     if {name: hashlib.sha256(value).hexdigest() for name, value in files.items()} != manifest['sha256']:
         raise ValueError('Bundle checksum mismatch')
-    required = validate_config(yaml.safe_load(files['servers.yaml']))
+    required = validate_config(yaml.safe_load(files['servers.yaml']), allow_legacy_oracle=True)
     if {f'secrets/{name}' for name in required} != set(files) - {'servers.yaml'}:
         raise ValueError('Bundle secret references do not match its files')
     if any(not files[f'secrets/{name}'].strip() for name in required):
@@ -107,7 +109,7 @@ def read_bundle(archive):
 
 def export_bundle(config_path, secrets_path, output):
     config_bytes = config_path.read_bytes()
-    required = validate_config(yaml.safe_load(config_bytes))
+    required = validate_config(yaml.safe_load(config_bytes), allow_legacy_oracle=True)
     files = {'servers.yaml': config_bytes}
     for name in sorted(required):
         candidates = (secrets_path / name, secrets_path / f'{name}.txt')
@@ -140,6 +142,7 @@ def is_empty_state(destination):
 
 def import_bundle(archive, destination, uid=None, gid=None):
     files = read_bundle(archive)  # Validate everything before changing destination.
+    validate_config(yaml.safe_load(files["servers.yaml"]))
     if not is_empty_state(destination):
         raise ValueError('Destination already contains configuration; export/backup it before replacing it')
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -229,6 +232,8 @@ def main():
                     import_bundle(source, args.destination, args.uid, args.gid)
                 else:
                     files = read_bundle(source)
+                    if args.command == 'can-import':
+                        validate_config(yaml.safe_load(files['servers.yaml']))
                     if args.command == 'can-import' and not is_empty_state(args.destination):
                         raise ValueError('Destination already contains configuration')
                     print(f'Valid bundle: configuration and {len(files) - 1} referenced secrets')
