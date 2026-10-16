@@ -14,7 +14,7 @@ Passwords are Oracle named secret entries keyed as `watchword.password.<alias>` 
 
 `entries.json` contains versioned nonsecret alias metadata: account, privilege, expected DBID, DB_UNIQUE_NAME, container, host, port and service. `tnsnames.ora` maps every alias to its endpoint. `sqlnet.ora` requires Oracle native encryption and integrity checks. Passwords are never copied into registry JSON, target records, `.env`, command arguments or logs.
 
-Each isolated Oracle worker invokes the bundled Java reader using Oracle's `OracleWallet` and `OracleSecretStore` classes. The private reader pipe supplies a transient password to that worker's explicit username/password database connection. Application APIs do not return it. The auto-login wallet authorizes local mounted readers; it is not a per-entry authorization boundary.
+Each isolated Oracle worker invokes the bundled Java reader using Oracle's `OracleWallet` and `OracleSecretStore` classes. The private reader pipe supplies a transient password to that worker's explicit username/password database connection. Consumer APIs do not return it. Watchword exposes a separate administrator reveal action requiring HTTPS, session/CSRF authorization and reauthentication; access and copy are audited without the value. The auto-login wallet authorizes local mounted readers; it is not a per-entry authorization boundary.
 
 ## One active shared snapshot
 
@@ -47,6 +47,6 @@ Rollcall and Muster's old per-application onboarding APIs and seed commands are 
 
 Shared initialization, append-only entry registration, password retrieval within isolated workers and consumer connection wiring are implemented. The installer checks storage/retrieval for two disposable entries without contacting an Oracle database. Each actual target still requires fresh identity and workload checks on the destination server.
 
-Production password rotation, password reveal API, consumer cutover and release certification remain disabled. Adding initial entries does not establish those capabilities. No existing-deployment migration is required or included in the fresh deployment procedure.
+Watchword implements approval-bound OCI rotation, encrypted replacement staging, fresh login verification, whole-wallet publication and explicit reconciliation without repeating password changes. Rollcall/Muster reconnect through authenticated target probes; Monitor supplies fresh authenticated MCP status. The executor encryption key and probe tokens stay in a private runtime volume separately from wallet files. Other writers must respect an unresolved rotation reservation. See Watchword's installation and implementation guides for qualified releases and activation. Registering an initial entry alone does not qualify a database or consumer. No existing-deployment migration is required by the fresh deployment procedure.
 
 Keep this document, `shared_wallet.py`, `WalletSecret.java` and the shared registry contract identical across all four repositories. Watchword's `scripts/check-suite-contract.py` checks those copies.
